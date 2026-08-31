@@ -29,10 +29,11 @@ A local deck is a self-contained folder:
 
 ```
 .local/slides/<name>/
-  manifest.html     running order for this deck (one @build:inline per slide)
-  <topic>.html      the slide files (named by topic)
-  local.js          (optional) this deck's SECTIONS + any bespoke scenes
-  local.css         (optional) this deck's bespoke styles
+  manifest.html      running order for this deck (one @build:inline per slide)
+  <topic>.html       the slide files (named by topic)
+  SPEAKER-NOTES.md   all of this deck's speaker notes, in one file (see below)
+  local.js           (optional) this deck's SECTIONS + any bespoke scenes
+  local.css          (optional) this deck's bespoke styles
 ```
 
 Build it with `node build.js --deck=<name>`. `local.css`/`local.js` are inlined only
@@ -40,9 +41,32 @@ for that deck; a plain build has no local layer at all. Set section names/budget
 assigning `window.DECK_SECTIONS` in `local.js`; register a bespoke scene with
 `window.Scenes.register("scene-name", fn)` there too — no need to touch `src/`.
 
+## Speaker notes
+
+Each deck's notes live in **one markdown file**, `SPEAKER-NOTES.md`, in the deck folder —
+that is where you write and edit them, not in the slide files. After editing it, push the
+notes back into the slides and rebuild:
+
+```bash
+node sync-notes.js --deck=<name> --apply    # SPEAKER-NOTES.md -> the slides
+node build.js --deck=<name>                 # -> dist/presentation-<name>.html
+```
+
+Going the other way — you added a slide, or typed a note straight into a slide file:
+
+```bash
+node sync-notes.js --deck=<name> --extract  # the slides -> SPEAKER-NOTES.md
+```
+
+Notes never reach the audience window; they show only in the presenter console.
+
 ## Presenting
 
 - **Navigate:** `→` / `Space` (next step or slide), `←` (back).
+- **Slide list:** `S` (or the ☰ button) shows / hides a sidebar listing every slide,
+  grouped by section. Click any entry to jump straight to it; the current slide stays
+  highlighted and scrolls into view. `Esc` closes it. Open or closed is remembered
+  between reloads, and it never appears on the projector.
 - **Presenter mode:** press `P` (or the 🖥 button). This opens a **new window that is the
   presentation itself** — drag it to the projector and press `F` to fullscreen. Your
   original window becomes the **presenter console** (speaker notes, timing, next-slide

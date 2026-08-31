@@ -12,6 +12,7 @@ html[data-mode="console"] #topbar,
 html[data-mode="console"] #controls,
 html[data-mode="console"] #counter,
 html[data-mode="console"] #progress,
+html[data-mode="console"] #sidebar,
 html[data-mode="console"] #hint{display:none;}
 html[data-mode="console"] #console{display:grid;}
 html[data-mode="console"]{overflow:auto;}
@@ -22,6 +23,7 @@ html[data-mode="console"] body{overflow:auto;background:var(--bg);}
    progress bar and a faint slide counter. */
 html[data-mode="present"] #controls,
 html[data-mode="present"] #hint,
+html[data-mode="present"] #sidebar,
 html[data-mode="present"] .section-pill{display:none;}
 
 /* ---- console layout ---- */

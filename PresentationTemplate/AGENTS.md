@@ -22,10 +22,11 @@ which is **git-ignored** — it stays on the user's machine and is never committ
 
 ```
 .local/slides/<name>/
-  manifest.html   running order (one @build:inline per slide; bare filenames)
-  <topic>.html    the slide files
-  local.js        (optional) window.DECK_SECTIONS + bespoke scenes (Scenes.register)
-  local.css       (optional) bespoke styles
+  manifest.html      running order (one @build:inline per slide; bare filenames)
+  <topic>.html       the slide files
+  SPEAKER-NOTES.md   REQUIRED — every deck's notes in one readable file
+  local.js           (optional) window.DECK_SECTIONS + bespoke scenes (Scenes.register)
+  local.css          (optional) bespoke styles
 ```
 
 Build a local deck with `node build.js --deck=<name>` → `dist/presentation-<name>.html`.
@@ -51,6 +52,23 @@ there — **do not** edit `src/slides.html` or the tracked engine files.
    inline SVG or a base64 data URI.
 5. **Prefer composing the library over new CSS.** The components in `slides.css` cover
    most layouts. Add new CSS only when nothing fits, and make it theme-aware.
+6. **Every deck has a `SPEAKER-NOTES.md`, and it is the source of truth for notes.**
+   Create it as soon as the deck has slides. The user edits their notes *there*, not in
+   the `@note` blocks — so whenever that file changes, push it back into the slides and
+   rebuild, in one go:
+
+   ```bash
+   node sync-notes.js --deck=<name> --apply    # SPEAKER-NOTES.md -> the @note blocks
+   node build.js --deck=<name>                 # -> dist/presentation-<name>.html
+   ```
+
+   Never leave the notes file and the built deck disagreeing. If you edit a slide's
+   `@note` directly (or add a slide), immediately run `--extract` to pull the notes back
+   into the markdown so it stays complete:
+
+   ```bash
+   node sync-notes.js --deck=<name> --extract  # the @note blocks -> SPEAKER-NOTES.md
+   ```
 
 ---
 
@@ -74,6 +92,9 @@ steps are the same either way:
    *only* place order lives.
 5. **Rebuild** — `node build.js --deck=<name>` (local) or `node build.js` (template) and
    confirm no warnings ("unreplaced tokens", "notes != slides").
+6. **Sync the notes file** — for a local deck, run
+   `node sync-notes.js --deck=<name> --extract` so `SPEAKER-NOTES.md` picks up the new or
+   changed slide. A deck whose notes file is missing a slide is not finished.
 
 To **reorder**, move the manifest line. To **remove**, delete the line. Nothing renumbers.
 
@@ -171,3 +192,5 @@ for the timing readout.
 - ❌ Colouring a `?` orange — the orange full-stop is for a period at the end of a title only.
 - ❌ Switching presenter sync to `BroadcastChannel` — it breaks over `file://`.
 - ❌ One-shot CSS animations on a non-`scene-slide` slide (they fire before arrival).
+- ❌ Shipping a deck whose `SPEAKER-NOTES.md` is missing, stale, or out of step with the
+  built file — the notes markdown and `dist/` must always agree.
