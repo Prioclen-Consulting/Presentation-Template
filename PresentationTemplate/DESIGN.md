@@ -307,7 +307,16 @@ Press **Esc** to exit edit mode without copying.
 ## 9. Chrome, timing & presenter mode
 
 - **Topbar** — logo, tag line, and a **section pill** naming the current section.
-- **Bottom** — slide counter, progress bar, and controls (theme / present / laser / help / prev / next).
+- **Bottom** — slide counter, progress bar, and controls (slide list / theme / present /
+  laser / help / prev / next).
+- **Slide list** (`S`, or the ☰ button) — a sidebar listing every slide, grouped by
+  section, with the current one highlighted; clicking an entry jumps to it. `deck.js`
+  builds it from the slides themselves at init, so **any** deck gets it without listing
+  its slides twice — a slide's label is its `h1`/`h2`, falling back to `.punch-response`,
+  a `blockquote`, then its `.kicker`. Open, it shifts the deck and chrome right by
+  `--sidebar-w` rather than covering them (it overlays below 820px). It is **deck mode
+  only** — hidden in the projector window and in the console — and its open/closed state
+  persists in `localStorage`.
 - **Sections & timing** — `SECTIONS` in `deck.js` lists `{ name, budget }` per
   `data-section` index. The presenter console shows elapsed vs budget per section and a
   running total; the bar turns red when over.

@@ -36,6 +36,7 @@ const Deck = (() => {
   let mode = "deck";
   let presentWin = null;            // (console) handle to the presentation popup
   let lastRenderedIndex = -1;       // so scenes replay only on slide change
+  let outlineOpen = false;          // slide navigator sidebar (deck mode only)
 
   // ---- unified navigation state (owned by the brain) ----
   const S = { index: 0, fragStep: 0, theme: "light" };
@@ -58,10 +59,84 @@ const Deck = (() => {
   }
   const fragCount = i => fragSteps(i).length;
   const fmt = s => { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+  // A slide's label: its heading, or the most title-like thing it has. Used by
+  // the console's "coming up next" and by the slide navigator. Tried in
+  // priority order — a selector LIST would return whichever matches first in
+  // document order, which is usually the kicker sitting above the heading.
+  const TITLE_SELECTORS = ["h1", "h2", ".punch-response", "blockquote", ".kicker"];
   function titleOf(i) {
-    const el = slides[i].querySelector("h1,h2");
-    return el ? el.textContent.replace(/\.$/, "").trim() : "Slide " + (i + 1);
+    for (const sel of TITLE_SELECTORS) {
+      const el = slides[i].querySelector(sel);
+      const t = el && el.textContent.replace(/\.$/, "").trim();
+      if (t) return t;
+    }
+    return "Slide " + (i + 1);
   }
+
+  // =========================================================
+  //  SLIDE NAVIGATOR (sidebar)
+  //  Built once from the slides themselves, so every deck — template
+  //  or local — gets it without listing anything twice. Deck mode only:
+  //  the projector window must never show it, and the console has its
+  //  own layout.
+  // =========================================================
+  function buildOutline() {
+    const list = $("sbList");
+    if (!list) return;
+    const frag = document.createDocumentFragment();
+    let lastSec = -1;
+    slides.forEach((sl, i) => {
+      const sec = sectionOf(i);
+      if (sec !== lastSec) {
+        const h = document.createElement("div");
+        h.className = "sb-sect";
+        h.textContent = SECTIONS[sec].name;
+        frag.appendChild(h);
+        lastSec = sec;
+      }
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "sb-item";
+      b.dataset.i = i;
+      const n = document.createElement("span");
+      n.className = "sb-n";
+      n.textContent = i + 1;
+      const t = document.createElement("span");
+      t.className = "sb-t";
+      t.textContent = titleOf(i);
+      b.append(n, t);
+      b.addEventListener("click", () => goto(i));
+      frag.appendChild(b);
+    });
+    list.appendChild(frag);
+    if ($("sbCount")) $("sbCount").textContent = slides.length;
+  }
+
+  function markOutline() {
+    const list = $("sbList");
+    if (!list) return;
+    list.querySelectorAll(".sb-item").forEach(b => {
+      const on = Number(b.dataset.i) === S.index;
+      b.classList.toggle("current", on);
+      if (on) b.setAttribute("aria-current", "true");
+      else b.removeAttribute("aria-current");
+    });
+    if (outlineOpen) {
+      const cur = list.querySelector(".sb-item.current");
+      if (cur) cur.scrollIntoView({ block: "nearest" });
+    }
+  }
+
+  function setOutline(open) {
+    if (mode !== "deck") open = false;   // never in the projector or console window
+    outlineOpen = open;
+    document.documentElement.classList.toggle("sidebar-open", open);
+    if ($("sidebar")) $("sidebar").setAttribute("aria-hidden", open ? "false" : "true");
+    if ($("btnOutline")) $("btnOutline").setAttribute("aria-pressed", open ? "true" : "false");
+    try { localStorage.setItem("deck-outline", open ? "1" : "0"); } catch (e) {}
+    if (open) markOutline();
+  }
+  function toggleOutline() { setOutline(!outlineOpen); }
 
   // =========================================================
   //  RENDER
@@ -100,6 +175,7 @@ const Deck = (() => {
     if ($("progress")) $("progress").firstElementChild.style.width = (S.index / Math.max(1, slides.length - 1) * 100) + "%";
     if ($("sectName")) $("sectName").textContent = SECTIONS[sec].name;
     if (S.index > 0 && $("hint")) $("hint").classList.add("hide");
+    markOutline();
   }
 
   function renderConsole() {
@@ -203,6 +279,7 @@ const Deck = (() => {
   // =========================================================
   function openPresent() {
     if (presentWin && !presentWin.closed) { presentWin.focus(); return; }
+    setOutline(false);          // this window is about to become the console
     const url = location.href.split("#")[0] + "#present";
     presentWin = window.open(url, "deck-present",
       "width=1280,height=800,menubar=no,toolbar=no,location=no,status=no");
@@ -246,6 +323,7 @@ const Deck = (() => {
       case "ArrowLeft": case "PageUp": e.preventDefault(); prev(); break;
       case "Home": e.preventDefault(); goto(0); break;
       case "End": e.preventDefault(); gotoEnd(); break;
+      case "s": case "S": toggleOutline(); break;
       case "t": case "T": toggleTheme(); break;
       case "p": case "P": openPresent(); break;
       case "l": case "L": if (typeof Laser !== "undefined") Laser.toggle(); break;
@@ -253,6 +331,7 @@ const Deck = (() => {
       case "?": $("help") && $("help").classList.toggle("show"); break;
       case "Escape":
         if ($("help") && $("help").classList.contains("show")) { $("help").classList.remove("show"); }
+        else if (outlineOpen) { setOutline(false); }
         else if (mode === "console") { closePresent(); }
         break;
     }
@@ -302,6 +381,8 @@ const Deck = (() => {
       $("btnTheme").onclick = toggleTheme;
       $("btnPresent").onclick = openPresent;
       $("btnHelp").onclick = () => $("help").classList.toggle("show");
+      if ($("btnOutline")) $("btnOutline").onclick = toggleOutline;
+      if ($("btnSbClose")) $("btnSbClose").onclick = () => setOutline(false);
       if ($("btnLaser")) $("btnLaser").onclick = () => { if (typeof Laser !== "undefined") Laser.toggle(); };
       $("help").addEventListener("click", e => { if (e.target.id === "help") $("help").classList.remove("show"); });
       // console controls
@@ -310,6 +391,11 @@ const Deck = (() => {
       $("conTheme").onclick = toggleTheme;
       $("conReopen").onclick = openPresent;
       $("conExit").onclick = closePresent;
+
+      buildOutline();
+      let wantOutline = false;
+      try { wantOutline = localStorage.getItem("deck-outline") === "1"; } catch (e) {}
+      setOutline(wantOutline);
 
       lastTick = Date.now();
       setInterval(tick, 1000);

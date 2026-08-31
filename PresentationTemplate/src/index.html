@@ -28,6 +28,19 @@
   </div>
 </div>
 
+<!-- ===================== SLIDE NAVIGATOR (sidebar) =====================
+     Populated by deck.js from the slides themselves, so any deck gets it
+     for free. Toggled with S / the ☰ button; deck mode only. -->
+<aside id="sidebar" aria-label="Slide navigator" aria-hidden="true">
+  <div class="sb-head">
+    <span class="sb-title">Slides</span>
+    <span class="sb-count" id="sbCount">0</span>
+    <span class="spacer"></span>
+    <button class="sb-close" id="btnSbClose" title="Hide slide list (S)" aria-label="Hide slide list">&#10005;</button>
+  </div>
+  <nav class="sb-list" id="sbList"></nav>
+</aside>
+
 <!-- ===================== DECK (the presentation) ===================== -->
 <div id="deck">
 <!-- @build:inline slides.html -->
@@ -36,6 +49,7 @@
 <!-- ===================== BOTTOM CHROME ===================== -->
 <div id="counter"><span class="sect" id="cSect">1</span> &middot; <span id="cNum">1</span>/<span id="cTot">1</span></div>
 <div id="controls">
+  <button class="btn icon" id="btnOutline" title="Slide list (S)" aria-pressed="false">☰</button>
   <button class="btn icon" id="btnTheme" title="Toggle light / dark (T)">◐</button>
   <button class="btn icon" id="btnPresent" title="Presenter mode (P)">🖥</button>
   <button class="btn icon" id="btnLaser" title="Laser pointer (L)" aria-pressed="false">🔴</button>
@@ -54,6 +68,7 @@
     <tr><td><kbd>←</kbd></td><td>Previous</td></tr>
     <tr><td><kbd>P</kbd></td><td>Enter presenter mode (opens the presentation window)</td></tr>
     <tr><td><kbd>Esc</kbd></td><td>Exit fullscreen, then exit presenter mode</td></tr>
+    <tr><td><kbd>S</kbd></td><td>Show / hide the slide list</td></tr>
     <tr><td><kbd>T</kbd></td><td>Toggle light / dark theme</td></tr>
     <tr><td><kbd>L</kbd></td><td>Toggle laser pointer</td></tr>
     <tr><td><kbd>F</kbd></td><td>Fullscreen</td></tr>
